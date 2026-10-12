@@ -11,6 +11,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
+from config import BASE_URL, SELENIUM_SEARCH_TEXT
 from models.product_data import Product
 from parsers.base_parser import BaseParser
 from parsers.helpers import (
@@ -24,8 +25,6 @@ from product_selectors.xpath_selectors import (
 )
 from services.product_service import ProductDisplayService
 
-BASE_URL = "https://brain.com.ua/"
-SEARCH_TEXT = "Apple iPhone 15 128GB Black"
 CHROME_VERSION = 154
 WAIT_SECONDS = 30
 INSPECTION_SECONDS = 5
@@ -40,7 +39,7 @@ class SeleniumParser(BaseParser):
     def __init__(
         self,
         base_url: str = BASE_URL,
-        search_text: str = SEARCH_TEXT,
+        search_text: str = SELENIUM_SEARCH_TEXT,
         chrome_version: int = CHROME_VERSION,
         wait_seconds: int = WAIT_SECONDS,
         headless: bool = False,

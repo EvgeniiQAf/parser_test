@@ -12,6 +12,11 @@ from playwright.sync_api import (
 )
 from playwright_stealth import Stealth
 
+from config import (
+    BASE_URL,
+    PLAYWRIGHT_EXPECTED_TITLE_PARTS,
+    PLAYWRIGHT_SEARCH_TEXT,
+)
 from models.product_data import Product
 from parsers.base_parser import BaseParser
 from parsers.helpers import (
@@ -25,9 +30,6 @@ from product_selectors.xpath_selectors import (
 )
 from services.product_service import ProductDisplayService
 
-BASE_URL = "https://brain.com.ua/"
-SEARCH_TEXT = "Apple iPhone 15 128GB Black"
-EXPECTED_TITLE_PARTS = ("iphone 15", "128gb", "black")
 WAIT_MS = 30_000
 INSPECTION_MS = 5_000
 STEP_DELAY_MS = 3_000
@@ -43,8 +45,8 @@ class PlaywrightParser(BaseParser):
     def __init__(
         self,
         base_url: str = BASE_URL,
-        search_text: str = SEARCH_TEXT,
-        expected_title_parts: tuple[str, ...] = EXPECTED_TITLE_PARTS,
+        search_text: str = PLAYWRIGHT_SEARCH_TEXT,
+        expected_title_parts: tuple[str, ...] = PLAYWRIGHT_EXPECTED_TITLE_PARTS,
         wait_ms: int = WAIT_MS,
         step_delay_ms: int = STEP_DELAY_MS,
         profile_dir: Path = PROFILE_DIR,
