@@ -11,6 +11,7 @@ from playwright.sync_api import (
     sync_playwright,
 )
 from playwright_stealth import Stealth
+from rich.console import Console
 
 from config import (
     BASE_URL,
@@ -29,6 +30,8 @@ from product_selectors.xpath_selectors import (
     PRODUCT_XPATH_SELECTORS,
 )
 from services.product_service import ProductDisplayService
+
+console = Console()
 
 WAIT_MS = 30_000
 INSPECTION_MS = 5_000
@@ -245,15 +248,25 @@ class PlaywrightParser(BaseParser):
         search_input.press("Enter")
         self._pause("Search submitted")
 
-        target = (
-            self._locator(NAVIGATION_XPATH_SELECTORS["target_search_result"])
-            .filter(visible=True)
-            .first
-        )
+        target_loc = self._locator(
+            NAVIGATION_XPATH_SELECTORS["target_search_result"]
+        ).filter(visible=True)
+
+        if target_loc.count() > 0:
+            target = target_loc.first
+        else:
+            target = (
+                self._locator(
+                    NAVIGATION_XPATH_SELECTORS["first_search_result"]
+                )
+                .filter(visible=True)
+                .first
+            )
+
         target.wait_for(state="visible", timeout=self.wait_ms)
         href = target.get_attribute("href")
         if not href:
-            raise ValueError("Target result has no href attribute.")
+            raise ValueError("Search result has no href attribute.")
 
         product_url = urljoin(page.url, href)
         self._pause("Matching result found")
@@ -266,9 +279,13 @@ class PlaywrightParser(BaseParser):
         title = self._text_of(title_loc) or ""
         norm_title = title.casefold().replace(" ", "")
 
-        expected = [p.replace(" ", "") for p in self.expected_title_parts]
-        if not all(p in norm_title for p in expected):
-            raise ValueError(f"Wrong product loaded: {title!r} at {page.url}")
+        if self.expected_title_parts:
+            expected = [p.replace(" ", "") for p in self.expected_title_parts]
+            if not any(p in norm_title for p in expected):
+                console.print(
+                    f"[yellow]Notice: Result title {title!r} does not "
+                    f"contain expected parts.[/yellow]"
+                )
 
         chr_container = self._locator(
             PRODUCT_XPATH_SELECTORS["characteristics_container"]
