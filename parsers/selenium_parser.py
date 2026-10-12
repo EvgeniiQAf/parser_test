@@ -213,6 +213,8 @@ class SeleniumParser(BaseParser):
             raise RuntimeError("WebDriver failed to initialize.")
 
         wait = WebDriverWait(driver, self.wait_seconds)
+        if driver.window_handles:
+            driver.switch_to.window(driver.window_handles[0])
         driver.get(self.base_url)
 
         search_xpath = NAVIGATION_XPATH_SELECTORS["search_input"]
