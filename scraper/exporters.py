@@ -1,11 +1,11 @@
-"""CSV exporter for product data."""
+"""CSV exporter for scraped product data."""
 
 import csv
 import json
 from pathlib import Path
 from typing import Any
 
-from models.product_data import Product
+from scraper.models import ScrapedProduct
 
 CSV_FIELDNAMES = [
     "title",
@@ -24,14 +24,14 @@ CSV_FIELDNAMES = [
 
 
 class CsvExporter:
-    """Exports parsed Product dataclass instances to a CSV file."""
+    """Exports ScrapedProduct instances to a CSV file."""
 
     def __init__(self, output_path: str | Path = "output/products.csv") -> None:
         self.output_path = Path(output_path)
 
     @staticmethod
-    def serialize_product(product: Product) -> dict[str, Any]:
-        """Convert a Product instance into a dictionary suitable for CSV."""
+    def serialize_product(product: ScrapedProduct) -> dict[str, Any]:
+        """Convert a ScrapedProduct instance into a dictionary suitable for CSV."""
         return {
             "title": product.title,
             "manufacturer": product.manufacturer,
@@ -51,13 +51,15 @@ class CsvExporter:
 
     def export(
         self,
-        products: Product | list[Product],
+        products: ScrapedProduct | list[ScrapedProduct],
         append: bool = True,
     ) -> Path:
         """Write product or list of products to the configured CSV file path."""
         self.output_path.parent.mkdir(parents=True, exist_ok=True)
 
-        items = [products] if isinstance(products, Product) else products
+        items = (
+            [products] if isinstance(products, ScrapedProduct) else products
+        )
         file_exists = self.output_path.exists()
         write_header = (
             not file_exists
@@ -79,3 +81,6 @@ class CsvExporter:
                 writer.writerow(self.serialize_product(product))
 
         return self.output_path
+
+
+__all__ = ["CSV_FIELDNAMES", "CsvExporter"]

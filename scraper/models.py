@@ -1,21 +1,14 @@
-"""Product data model."""
+"""Domain models for scraped web data (DTO)."""
 
 from dataclasses import dataclass, field
 from typing import Self
 
-
-def match_characteristic(specs: dict[str, str], *names: str) -> str | None:
-    """Find a characteristic value by checking alias keys in normalized form."""
-    expected = {name.casefold().replace("’", "'").strip() for name in names}
-    for key, val in specs.items():
-        if key.casefold().replace("’", "'").strip() in expected:
-            return val
-    return None
+from scraper.utils import match_characteristic
 
 
 @dataclass
-class Product:
-    """Store parsed product information."""
+class ScrapedProduct:
+    """Data Transfer Object (DTO) holding scraped product information."""
 
     title: str | None = None
     manufacturer: str | None = None
@@ -46,7 +39,7 @@ class Product:
         screen_diagonal: str | None = None,
         screen_resolution: str | None = None,
     ) -> Self:
-        """Create a Product instance extracting core fields from specs."""
+        """Create a ScrapedProduct instance extracting core fields from specs."""
         specs_dict = specs or {}
         return cls(
             title=title,
@@ -83,3 +76,7 @@ class Product:
             ),
             characteristics=specs_dict,
         )
+
+
+# Backward compatibility alias
+Product = ScrapedProduct

@@ -1,17 +1,30 @@
-"""Database service for storing parsed products via Django ORM."""
+"""Database persistence service for saving ScrapedProduct via Django ORM."""
 
+import os
+import sys
 from decimal import Decimal
+from pathlib import Path
 
-import modules.load_django  # noqa: F401
-from backend.products.models import ProductModel
-from models.product_data import Product
+# Ensure Django environment is configured
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "web_service.config.settings")
+
+import django  # noqa: E402
+
+django.setup()
+
+from scraper.models import ScrapedProduct  # noqa: E402
+from web_service.products.models import ProductModel  # noqa: E402
 
 
 class ProductDatabaseService:
-    """Handles persisting Product instances into the database using Django ORM."""
+    """Handles persisting ScrapedProduct instances into database via Django ORM."""
 
     @staticmethod
-    def save(product: Product) -> ProductModel:
+    def save(product: ScrapedProduct) -> ProductModel:
         """Create or update a ProductModel record in the database."""
         regular_price = (
             Decimal(str(product.regular_price))
@@ -49,3 +62,6 @@ class ProductDatabaseService:
             product_code=None,
             **defaults,
         )
+
+
+__all__ = ["ProductDatabaseService"]

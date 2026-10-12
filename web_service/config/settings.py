@@ -1,4 +1,4 @@
-"""Django settings for Brain.ua parser project."""
+"""Django settings for Brain.ua web service."""
 
 import os
 from pathlib import Path
@@ -25,7 +25,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "backend.products.apps.ProductsConfig",
+    "web_service.products.apps.ProductsConfig",
 ]
 
 MIDDLEWARE = [
@@ -38,7 +38,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = "backend.config.urls"
+ROOT_URLCONF = "web_service.config.urls"
 
 TEMPLATES = [
     {
@@ -56,7 +56,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "backend.config.wsgi.application"
+WSGI_APPLICATION = "web_service.config.wsgi.application"
 
 # Database configuration: PostgreSQL when credentials provided, else SQLite
 db_name = os.getenv("DB_NAME")

@@ -1,19 +1,23 @@
-"""Service layer for product formatting, presentation, and output."""
+"""Service layer for terminal formatting and styled output using Rich."""
 
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
-from models.product_data import Product
+from scraper.models import ScrapedProduct
 
 
 class ProductDisplayService:
-    """Handles formatted console presentation of Product models using Rich."""
+    """Handles formatted console presentation of ScrapedProduct models."""
 
     def __init__(self, console: Console | None = None) -> None:
         self.console = console or Console()
 
-    def display(self, product: Product, title: str = "PRODUCT INFORMATION") -> None:
+    def display(
+        self,
+        product: ScrapedProduct,
+        title: str = "PRODUCT INFORMATION",
+    ) -> None:
         """Render product details, image galleries, and specs in styled tables."""
         self.console.print()
         self.console.print(
@@ -28,7 +32,7 @@ class ProductDisplayService:
         self._print_images(product)
         self._print_characteristics(product)
 
-    def _print_general_info(self, product: Product) -> None:
+    def _print_general_info(self, product: ScrapedProduct) -> None:
         info_table = Table(
             title="General Information",
             show_header=True,
@@ -58,7 +62,7 @@ class ProductDisplayService:
 
         self.console.print(info_table)
 
-    def _print_images(self, product: Product) -> None:
+    def _print_images(self, product: ScrapedProduct) -> None:
         images_table = Table(
             title=f"Product Images ({len(product.images)})",
             expand=True,
@@ -71,7 +75,7 @@ class ProductDisplayService:
 
         self.console.print(images_table)
 
-    def _print_characteristics(self, product: Product) -> None:
+    def _print_characteristics(self, product: ScrapedProduct) -> None:
         characteristics_table = Table(
             title=f"Characteristics ({len(product.characteristics)})",
             show_lines=True,
@@ -92,3 +96,6 @@ class ProductDisplayService:
             characteristics_table.add_row(name, value)
 
         self.console.print(characteristics_table)
+
+
+__all__ = ["ProductDisplayService"]

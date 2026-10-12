@@ -96,7 +96,7 @@
 
 ### Запуск веб-сервера
 ```bash
-.venv/bin/python backend/manage.py runserver
+.venv/bin/python web_service/manage.py runserver
 ```
 
 Після запуску відкрийте браузер за адресою:

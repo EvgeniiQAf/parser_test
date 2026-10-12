@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 
-from backend.products.models import ProductModel
+from web_service.products.models import ProductModel
 
 
 @admin.register(ProductModel)

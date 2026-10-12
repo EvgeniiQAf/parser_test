@@ -1,4 +1,4 @@
-"""Brain.ua product parser using Selenium and undetected_chromedriver."""
+"""Brain.ua product scraper using Selenium and undetected_chromedriver."""
 
 import time
 import traceback
@@ -12,18 +12,18 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support.ui import WebDriverWait
 
 from config import BASE_URL, SELENIUM_SEARCH_TEXT
-from models.product_data import Product
-from parsers.base_parser import BaseParser
-from parsers.helpers import (
+from scraper.display import ProductDisplayService
+from scraper.engines.base_scraper import BaseScraper
+from scraper.models import ScrapedProduct
+from scraper.selectors import (
+    NAVIGATION_XPATH_SELECTORS,
+    PRODUCT_XPATH_SELECTORS,
+)
+from scraper.utils import (
     clean_text,
     parse_number,
     parse_price,
 )
-from product_selectors.xpath_selectors import (
-    NAVIGATION_XPATH_SELECTORS,
-    PRODUCT_XPATH_SELECTORS,
-)
-from services.product_service import ProductDisplayService
 
 CHROME_VERSION = 154
 WAIT_SECONDS = 30
@@ -31,8 +31,8 @@ INSPECTION_SECONDS = 5
 DEBUG_HTML = Path("brain_product_debug.html")
 
 
-class SeleniumParser(BaseParser):
-    """Product parser based on undetected_chromedriver (Selenium)."""
+class SeleniumScraper(BaseScraper):
+    """Product scraper based on undetected_chromedriver (Selenium)."""
 
     name = "Selenium"
 
@@ -181,13 +181,13 @@ class SeleniumParser(BaseParser):
             return old_price, def_price
         return def_price or old_price or new_price, None
 
-    def extract_product(self) -> Product:
+    def extract_product(self) -> ScrapedProduct:
         """Extract all details from currently loaded product page."""
         selectors = PRODUCT_XPATH_SELECTORS
         regular, sale = self.parse_prices()
         reviews = parse_number(self._first_text(selectors.get("review_count")))
 
-        return Product.from_raw(
+        return ScrapedProduct.from_raw(
             specs=self.parse_characteristics(),
             title=self._first_text(selectors.get("title")),
             regular_price=regular,
@@ -204,7 +204,7 @@ class SeleniumParser(BaseParser):
             ),
         )
 
-    def parse(self) -> Product:
+    def parse(self) -> ScrapedProduct:
         """Navigate to site, search product, and extract all details."""
         self.start()
         driver = self.driver
@@ -266,17 +266,21 @@ class SeleniumParser(BaseParser):
         return self.extract_product()
 
 
+# Backward compatibility alias
+SeleniumParser = SeleniumScraper
+
+
 def main() -> None:
-    """Run SeleniumParser standalone."""
+    """Run SeleniumScraper standalone."""
     display = ProductDisplayService()
-    parser = SeleniumParser()
+    scraper = SeleniumScraper()
     try:
-        product = parser.parse()
-        display.display(product, title="SELENIUM PRODUCT")
+        product = scraper.parse()
+        display.display(product, title="SELENIUM SCRAPER")
     except Exception:
         traceback.print_exc()
     finally:
-        parser.close()
+        scraper.close()
 
 
 if __name__ == "__main__":

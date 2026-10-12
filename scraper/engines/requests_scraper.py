@@ -1,4 +1,4 @@
-"""Brain.ua product parser using HTTP requests and BeautifulSoup4."""
+"""Brain.ua product scraper using HTTP requests and BeautifulSoup4."""
 
 from urllib.parse import urljoin
 
@@ -6,15 +6,15 @@ from bs4 import BeautifulSoup
 from curl_cffi import requests
 
 from config import PRODUCT_URL
-from models.product_data import Product
-from parsers.base_parser import BaseParser
-from parsers.helpers import clean_text, parse_number, parse_price
-from product_selectors.css_selectors import BS4_SELECTORS
-from services.product_service import ProductDisplayService
+from scraper.display import ProductDisplayService
+from scraper.engines.base_scraper import BaseScraper
+from scraper.models import ScrapedProduct
+from scraper.selectors import BS4_SELECTORS
+from scraper.utils import clean_text, parse_number, parse_price
 
 
-class RequestsParser(BaseParser):
-    """Product parser based on curl_cffi requests and BeautifulSoup."""
+class RequestsScraper(BaseScraper):
+    """Fast scraper based on curl_cffi requests and BeautifulSoup."""
 
     name = "Requests"
 
@@ -77,8 +77,8 @@ class RequestsParser(BaseParser):
 
         return images
 
-    def parse(self) -> Product:
-        """Fetch page HTML and parse into a populated Product dataclass."""
+    def parse(self) -> ScrapedProduct:
+        """Fetch page HTML and parse into a populated ScrapedProduct dataclass."""
         html = self.fetch_html(self.url)
         soup = BeautifulSoup(html, "lxml")
 
@@ -123,7 +123,7 @@ class RequestsParser(BaseParser):
         )
         review_count = parse_number(rev_text)
 
-        return Product.from_raw(
+        return ScrapedProduct.from_raw(
             specs=specs,
             title=title,
             regular_price=regular_price,
@@ -134,11 +134,15 @@ class RequestsParser(BaseParser):
         )
 
 
+# Backward compatibility alias
+RequestsParser = RequestsScraper
+
+
 def main() -> None:
-    """Run RequestsParser standalone."""
-    with RequestsParser() as parser:
-        product = parser.parse()
-    ProductDisplayService().display(product, title="REQUESTS PRODUCT")
+    """Run RequestsScraper standalone."""
+    with RequestsScraper() as scraper:
+        product = scraper.parse()
+    ProductDisplayService().display(product, title="REQUESTS SCRAPER")
 
 
 if __name__ == "__main__":

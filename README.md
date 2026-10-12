@@ -1,49 +1,63 @@
-# Brain.ua Product Parser
+# Brain.ua Product Scraper
 
 A Python project for scraping product information from the Brain.ua online store, developed as a technical assignment for a **Junior Python Developer** position.
 
-The project follows **Object-Oriented Programming (OOP)** and **SOLID** principles. It supports three scraping engines, CSV export, and product data storage in a relational database using Django ORM.
+The project follows **Object-Oriented Programming (OOP)** and **SOLID** principles, organized with a clean domain-driven architecture, supporting three scraping engines, CSV export, and product data storage in a relational database using Django ORM.
 
 ---
 
-##  Tech Stack
+## 🛠 Tech Stack
 
 - **Language:** Python 3.12+
 - **Web Scraping:**
-  - `curl_cffi` + `BeautifulSoup4` — HTTP-based scraping with browser impersonation to help handle Cloudflare protection.
+  - `curl_cffi` + `BeautifulSoup4` — HTTP-based scraping with browser impersonation to bypass Cloudflare protection.
   - `Selenium` + `undetected_chromedriver` — browser automation, product search, and navigation using Chrome.
   - `Playwright` + `playwright_stealth` — browser-based scraping with a persistent browser session.
-- **Backend and Data Storage:**
-  - `Django` ORM
-  - `PostgreSQL` / `SQLite` — automatic SQLite fallback for easier local setup.
+- **Web Service and Data Storage:**
+  - `Django` ORM + Admin Dashboard
+  - `PostgreSQL` / `SQLite` — automatic SQLite fallback for convenient local development.
   - `CSV` — UTF-8 with BOM (`utf-8-sig`) for proper Cyrillic character display in Excel.
 - **Console Output:** `Rich` — formatted tables and colored terminal output.
 - **Code Quality and Testing:** `pytest`, `flake8` (max-line-length=88), `ruff`.
 
 ---
 
-##  Project Structure
+## 📁 Project Architecture
+
+The codebase is organized into cohesive packages separating data collection, web persistence, and tests:
 
 ```text
-├── backend/                  # Django project and applications
-│   ├── config/               # Django settings, URLs, and WSGI configuration
-│   ├── products/             # Product app (models, admin, migrations)
-│   └── manage.py             # Django management utility
-├── exporters/                # Data export modules (CSV)
-├── models/                   # Product dataclass and factory methods
-├── modules/                  # Django environment initialization (load_django)
-├── parsers/                  # BaseParser, Requests, Selenium, and Playwright
-├── product_selectors/        # CSS and XPath selectors
-├── services/                 # Rich output and database persistence services
-├── tests/                    # Unit tests (pytest)
-├── main.py                   # Main CLI entry point
-├── requirements.txt          # Project dependencies
-└── README.md
+python_parser_test/
+├── 📂 scraper/                   # Data collection package (everything scraping)
+│   ├── 📂 engines/               # Scraping engines
+│   │   ├── base_scraper.py       # BaseScraper abstract interface
+│   │   ├── requests_scraper.py   # Fast HTTP scraper (curl_cffi)
+│   │   ├── selenium_scraper.py   # Chrome scraper (Selenium)
+│   │   └── playwright_scraper.py # Chromium scraper (Playwright)
+│   ├── models.py                 # ScrapedProduct (DTO for collected data)
+│   ├── selectors.py              # Robust XPath and CSS selectors
+│   ├── utils.py                  # Text cleaning, price & number parsing helpers
+│   ├── exporters.py              # CSV exporter (CsvExporter)
+│   └── display.py                # Rich terminal presentation service
+│
+├── 📂 web_service/               # Django web service and persistence layer
+│   ├── 📂 config/                # Django settings, URLs, and WSGI configuration
+│   ├── 📂 products/              # Products app (ProductModel, admin, migrations)
+│   ├── db_service.py             # Database service: ScrapedProduct -> ProductModel
+│   └── manage.py                 # Django management CLI utility
+│
+├── 📂 tests/                     # Test suite
+│   └── test_scrapers.py          # 10 automated unit tests (pytest)
+│
+├── 📄 main.py                    # Main CLI entry point (orchestrator)
+├── 📄 config.py                  # User search queries and URL configuration
+├── 📄 requirements.txt          # Project dependencies
+└── 📄 COMMANDS.md                # Detailed quick-reference guide for all commands
 ```
 
 ---
 
-##  Installation and Setup
+## 🚀 Installation and Setup
 
 ### 1. Clone the Repository and Create a Virtual Environment
 
@@ -66,7 +80,7 @@ playwright install chromium
 
 By default, the project uses **SQLite** (`db.sqlite3`).
 
-To use **PostgreSQL**, create a `.env` file based on `.env.example` and configure the database connection:
+To use **PostgreSQL**, create a `.env` file based on `.env.example`:
 
 ```env
 DB_NAME=brain_parser
@@ -76,119 +90,85 @@ DB_HOST=localhost
 DB_PORT=5432
 ```
 
-Make sure the PostgreSQL server is running and the specified database exists.
-
-Apply the database migrations:
+Apply database migrations:
 
 ```bash
-python backend/manage.py migrate
+python web_service/manage.py migrate
 ```
-
-**Note:** PostgreSQL is required by the technical assignment. SQLite is provided only as a convenient fallback for local development.
 
 ---
 
-##  Usage (CLI)
+## 💻 Usage (CLI)
 
-The application uses a single entry point, `main.py`, with command-line arguments for selecting the parser and output options.
-
-To view all available options:
+The application uses a single entry point, `main.py`, with command-line arguments:
 
 ```bash
+# View all available CLI options
 python main.py --help
 ```
 
-### Usage Examples
+### Usage Examples:
 
-**1. Run the Requests / BeautifulSoup parser**
-
+**1. Run the Requests / curl_cffi scraper:**
 ```bash
-python main.py --parser requests
+python main.py --scraper requests
 ```
 
-**2. Run the Selenium parser**
-
-Opens Chrome, searches for the product, and extracts its details.
-
+**2. Run the Selenium scraper:**
 ```bash
-python main.py --parser selenium
+python main.py --scraper selenium
 ```
 
-**3. Run the Playwright parser**
-
+**3. Run the Playwright scraper:**
 ```bash
-python main.py --parser playwright
+python main.py --scraper playwright
 ```
 
-**4. Scrape product data and export it to CSV**
-
+**4. Scrape and export to CSV:**
 ```bash
-python main.py --parser requests --csv
+python main.py --scraper requests --csv
+# File will be saved to: output/products.csv
 ```
 
-The exported file will be saved to:
-
-```text
-output/products.csv
-```
-
-**5. Scrape product data and save it to the database using Django ORM**
-
+**5. Scrape and save to database (Django ORM):**
 ```bash
-python main.py --parser requests --db
+python main.py --scraper requests --db
 ```
 
-**6. Run the complete workflow**
-
-Scrape product information, display it in the terminal, export it to CSV, and save it to the database.
-
+**6. Complete workflow (Terminal output + CSV + Database):**
 ```bash
-python main.py --parser requests --csv --db
+python main.py --scraper requests --csv --db
 ```
+
+*(Note: `--parser` flag is fully supported as a backward-compatible alias for `--scraper`)*.
 
 ---
 
-##  Django Admin Panel
+## 🛡 Django Admin Panel
 
-The Django admin interface allows you to view and manage stored product records.
-
-Create a superuser:
+To view and manage stored product records in the browser:
 
 ```bash
-python backend/manage.py createsuperuser
+python web_service/manage.py createsuperuser
+python web_service/manage.py runserver
 ```
 
-Start the development server:
-
-```bash
-python backend/manage.py runserver
-```
-
-Open the admin panel in your browser:
-
-http://127.0.0.1:8000/admin/
-
-Log in using your superuser credentials.
+Open in browser: **http://127.0.0.1:8000/** (automatically redirects to `/admin/`).
+- **Default Login:** `admin`
+- **Default Password:** `admin12345`
 
 ---
 
-##  Testing and Code Quality
+## 🧪 Testing and Code Quality
 
 ### Run Unit Tests (pytest)
-
 ```bash
-pytest tests/ -v
+pytest -v
 ```
 
-### Run Ruff
-
+### Run Linters (Ruff and Flake8)
 ```bash
 ruff check .
-```
-
-### Run Flake8
-
-```bash
 flake8 .
 ```
 
@@ -196,14 +176,12 @@ Flake8 is configured with a maximum line length of 88 characters.
 
 ---
 
-##  Technical Assignment
+## 📋 Technical Assignment
 
 The project implements three independent product scrapers for [Brain.ua](https://brain.com.ua/):
 
-- **Requests / BeautifulSoup:** Extracts product information directly from a specified product page.
-- **Selenium:** Searches for a product, opens the first search result, and extracts its details.
-- **Playwright:** Performs the same browser-based workflow independently using Playwright.
+- **Requests / curl_cffi:** Extracts product information directly from a specified product page.
+- **Selenium:** Searches for a product, selects the matching result, and extracts all details.
+- **Playwright:** Performs the same browser-based search and extraction independently using Playwright.
 
-Each parser collects product information, including the title, manufacturer, color, storage capacity, regular and promotional prices, image URLs, product code, review count, screen size, screen resolution, and product specifications.
-
-The collected data can be displayed in the terminal, saved to a database, and exported to CSV.
+Each scraper collects product information, including the title, manufacturer, color, storage capacity, regular and promotional prices, image URLs, product code, review count, screen size, screen resolution, and technical specifications.

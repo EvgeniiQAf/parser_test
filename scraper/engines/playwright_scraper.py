@@ -1,4 +1,4 @@
-"""Brain.ua product parser using Playwright with stealth evasions."""
+"""Brain.ua product scraper using Playwright with stealth evasions."""
 
 import traceback
 from pathlib import Path
@@ -18,18 +18,18 @@ from config import (
     PLAYWRIGHT_EXPECTED_TITLE_PARTS,
     PLAYWRIGHT_SEARCH_TEXT,
 )
-from models.product_data import Product
-from parsers.base_parser import BaseParser
-from parsers.helpers import (
+from scraper.display import ProductDisplayService
+from scraper.engines.base_scraper import BaseScraper
+from scraper.models import ScrapedProduct
+from scraper.selectors import (
+    NAVIGATION_XPATH_SELECTORS,
+    PRODUCT_XPATH_SELECTORS,
+)
+from scraper.utils import (
     clean_text,
     parse_number,
     parse_price,
 )
-from product_selectors.xpath_selectors import (
-    NAVIGATION_XPATH_SELECTORS,
-    PRODUCT_XPATH_SELECTORS,
-)
-from services.product_service import ProductDisplayService
 
 console = Console()
 
@@ -40,8 +40,8 @@ DEBUG_HTML = Path("brain_playwright_debug.html")
 PROFILE_DIR = Path(".playwright_chrome_profile").resolve()
 
 
-class PlaywrightParser(BaseParser):
-    """Product parser based on Playwright Chromium and stealth plugin."""
+class PlaywrightScraper(BaseScraper):
+    """Product scraper based on Playwright Chromium and stealth plugin."""
 
     name = "Playwright"
 
@@ -206,13 +206,13 @@ class PlaywrightParser(BaseParser):
             return old_price, def_price
         return def_price or old_price or new_price, None
 
-    def extract_product(self) -> Product:
+    def extract_product(self) -> ScrapedProduct:
         """Extract all details from currently loaded product page."""
         sel = PRODUCT_XPATH_SELECTORS
         regular, sale = self.parse_prices()
         reviews = parse_number(self._first_text(sel["review_count"]))
 
-        return Product.from_raw(
+        return ScrapedProduct.from_raw(
             specs=self.parse_characteristics(),
             title=self._first_text(sel["title"]),
             regular_price=regular,
@@ -227,7 +227,7 @@ class PlaywrightParser(BaseParser):
             screen_resolution=self._first_text(sel["screen_resolution"]),
         )
 
-    def parse(self) -> Product:
+    def parse(self) -> ScrapedProduct:
         """Execute full navigation flow, search, and extract product data."""
         self.start()
         page = self.page
@@ -324,17 +324,21 @@ class PlaywrightParser(BaseParser):
         return self.extract_product()
 
 
+# Backward compatibility alias
+PlaywrightParser = PlaywrightScraper
+
+
 def main() -> None:
-    """Run PlaywrightParser standalone."""
+    """Run PlaywrightScraper standalone."""
     display = ProductDisplayService()
-    parser = PlaywrightParser()
+    scraper = PlaywrightScraper()
     try:
-        product = parser.parse()
-        display.display(product, title="PLAYWRIGHT PRODUCT")
+        product = scraper.parse()
+        display.display(product, title="PLAYWRIGHT SCRAPER")
     except Exception:
         traceback.print_exc()
     finally:
-        parser.close()
+        scraper.close()
 
 
 if __name__ == "__main__":

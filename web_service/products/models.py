@@ -88,6 +88,7 @@ class ProductModel(models.Model):
     )
 
     class Meta:
+        db_table = "products_productmodel"
         verbose_name = "Товар"
         verbose_name_plural = "Товари"
         ordering = ["-updated_at"]

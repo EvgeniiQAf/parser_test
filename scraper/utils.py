@@ -1,8 +1,15 @@
-"""Common text and data parsing helper functions for Brain.ua parsers."""
+"""Common text and data parsing utility functions for Brain.ua scrapers."""
 
 import re
 
-from models.product_data import match_characteristic
+
+def match_characteristic(specs: dict[str, str], *names: str) -> str | None:
+    """Find a characteristic value by checking alias keys in normalized form."""
+    expected = {name.casefold().replace("’", "'").strip() for name in names}
+    for key, val in specs.items():
+        if key.casefold().replace("’", "'").strip() in expected:
+            return val
+    return None
 
 
 def clean_text(value: str | None) -> str | None:
