@@ -248,22 +248,42 @@ class PlaywrightParser(BaseParser):
         search_input.press("Enter")
         self._pause("Search submitted")
 
-        target_loc = self._locator(
-            NAVIGATION_XPATH_SELECTORS["target_search_result"]
-        ).filter(visible=True)
+        first_loc = (
+            self._locator(NAVIGATION_XPATH_SELECTORS["first_search_result"])
+            .filter(visible=True)
+            .first
+        )
+        first_loc.wait_for(state="visible", timeout=self.wait_ms)
 
-        if target_loc.count() > 0:
-            target = target_loc.first
-        else:
-            target = (
-                self._locator(
-                    NAVIGATION_XPATH_SELECTORS["first_search_result"]
+        target = None
+        if self.expected_title_parts:
+            expected = [
+                p.casefold().replace(" ", "").replace("_", "")
+                for p in self.expected_title_parts
+            ]
+            results_loc = self._locator(
+                NAVIGATION_XPATH_SELECTORS["search_results"]
+            ).filter(visible=True)
+            total = results_loc.count()
+            for idx in range(min(total, 12)):
+                candidate = results_loc.nth(idx)
+                raw_href = candidate.get_attribute("href") or ""
+                norm_href = raw_href.casefold().replace("_", "")
+                card = candidate.locator(
+                    "xpath=./ancestor::div[contains(@class, 'br-pp')][1]"
                 )
-                .filter(visible=True)
-                .first
-            )
+                card_text = (
+                    card.inner_text().casefold().replace(" ", "")
+                    if card.count()
+                    else ""
+                )
+                combined = f"{norm_href} {card_text}"
+                if all(part in combined for part in expected):
+                    target = candidate
+                    break
 
-        target.wait_for(state="visible", timeout=self.wait_ms)
+        if target is None:
+            target = first_loc
         href = target.get_attribute("href")
         if not href:
             raise ValueError("Search result has no href attribute.")

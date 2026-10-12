@@ -221,11 +221,35 @@ class SeleniumParser(BaseParser):
         search.send_keys(self.search_text)
         search.send_keys(Keys.ENTER)
 
-        wait.until(lambda d: "/search/" in d.current_url)
+        wait.until(
+            lambda d: "/search/" in d.current_url or "Search=" in d.current_url
+        )
 
         first_xpath = NAVIGATION_XPATH_SELECTORS["first_search_result"]
         first_result = wait.until(lambda d: self._visible_element(first_xpath))
-        first_result.click()
+
+        target_el = first_result
+        keywords = [
+            w.casefold()
+            for w in self.search_text.split()
+            if len(w) > 2
+            and w.casefold() not in ("apple", "мобільний", "телефон")
+        ]
+        if keywords:
+            cards = driver.find_elements(
+                By.XPATH, NAVIGATION_XPATH_SELECTORS["search_results"]
+            )
+            for card in cards[:12]:
+                if not card.is_displayed():
+                    continue
+                href = (card.get_attribute("href") or "").casefold().replace(
+                    "_", ""
+                )
+                if all(k in href for k in keywords):
+                    target_el = card
+                    break
+
+        target_el.click()
 
         title_xpath = PRODUCT_XPATH_SELECTORS["title"]
         wait.until(
