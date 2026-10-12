@@ -4,51 +4,91 @@
 
 ---
 
-## 1. Запуск парсерів через CLI (`main.py`)
+## 1. Логіка прапорців збереження (CLI Flags)
 
-### ⚡ Швидкий запуск (Requests + curl_cffi)
-> Працює за ~1-2 секунди, обходить Cloudflare через impersonate Chrome.
-```bash
-.venv/bin/python main.py --parser requests
-```
+| Команда / Прапорець | Що робить | Результат |
+| :--- | :--- | :--- |
+| **Без прапорців** | Тільки вивід на екран | Дані відображаються у таблиці в терміналі, **файли та БД не змінюються**. |
+| `--csv` | Збереження у файл | Дописує товар у файл `output/products.csv`. |
+| `--db` | Збереження в базу даних | Додає або оновлює товар у SQLite через Django ORM. |
+| `--csv --db` | **Повне збереження** | Одночасно: вивід у термінал + запис у CSV + запис у базу даних. |
 
-### 🌐 Запуск Selenium (undetected_chromedriver)
-> Запускає браузер Google Chrome, здійснює пошук, переходить на товар і розкриває характеристики.
-```bash
-.venv/bin/python main.py --parser selenium
-```
-
-### 🎭 Запуск Playwright (Chromium Stealth)
-> Запускає Playwright Chromium із постійним збереженням сесії та захистом від блокувань.
-```bash
-.venv/bin/python main.py --parser playwright
-```
+> [!NOTE]
+> За замовчуванням парсер працює **без збереження** (тільки перегляд). Щоб зафіксувати результат, обов'язково вказуйте `--csv`, `--db` або обидва разом.
 
 ---
 
-## 2. Збереження зібраних даних
+## 2. Запуск парсерів: без прапорців та з прапорцями
 
-### 📄 Збереження в CSV файл
-Дані записуються в `output/products.csv` (кирилиця зберігається коректно для Excel):
-```bash
-.venv/bin/python main.py --parser requests --csv
-```
+### 🌐 Selenium (`undetected_chromedriver`)
+Шукає товар на Brain.ua за запитом `SELENIUM_SEARCH_TEXT` з `config.py`.
 
-Задати власний шлях до файлу CSV:
-```bash
-.venv/bin/python main.py --parser requests --csv --csv-path output/my_phones.csv
-```
+* **Тільки екран (без прапорців):**
+  ```bash
+  .venv/bin/python main.py --parser selenium
+  ```
+* **Зі збереженням у CSV:**
+  ```bash
+  .venv/bin/python main.py --parser selenium --csv
+  ```
+* **Зі збереженням у базу даних:**
+  ```bash
+  .venv/bin/python main.py --parser selenium --db
+  ```
+* **Повний запуск (екран + CSV + база даних):**
+  ```bash
+  .venv/bin/python main.py --parser selenium --csv --db
+  ```
 
-### 🗄 Збереження в базу даних (Django ORM)
-Створює або оновлює товар у базі даних (без дублювання завдяки `product_code`):
-```bash
-.venv/bin/python main.py --parser requests --db
-```
+---
 
-### 🚀 Повний цикл (Екран + CSV + База даних одночасно)
-```bash
-.venv/bin/python main.py --parser requests --csv --db
-```
+### 🎭 Playwright (Chromium Stealth)
+Шукає товар на Brain.ua за запитом `PLAYWRIGHT_SEARCH_TEXT` з `config.py`.
+
+* **Тільки екран (без прапорців):**
+  ```bash
+  .venv/bin/python main.py --parser playwright
+  ```
+* **Зі збереженням у CSV:**
+  ```bash
+  .venv/bin/python main.py --parser playwright --csv
+  ```
+* **Зі збереженням у базу даних:**
+  ```bash
+  .venv/bin/python main.py --parser playwright --db
+  ```
+* **Повний запуск (екран + CSV + база даних):**
+  ```bash
+  .venv/bin/python main.py --parser playwright --csv --db
+  ```
+
+---
+
+### ⚡ Requests + curl_cffi (Прямий URL)
+Миттєвий парсинг за прямою адресою товару `PRODUCT_URL` з `config.py`.
+
+* **Тільки екран (без прапорців):**
+  ```bash
+  .venv/bin/python main.py --parser requests
+  ```
+* **Зі збереженням у CSV:**
+  ```bash
+  .venv/bin/python main.py --parser requests --csv
+  ```
+* **Зі збереженням у базу даних:**
+  ```bash
+  .venv/bin/python main.py --parser requests --db
+  ```
+* **Повний запуск (екран + CSV + база даних):**
+  ```bash
+  .venv/bin/python main.py --parser requests --csv --db
+  ```
+
+* **З власним шляхом до CSV файлу:**
+  ```bash
+  .venv/bin/python main.py --parser requests --csv --csv-path output/custom_file.csv
+  ```
+
 
 ---
 

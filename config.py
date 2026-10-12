@@ -11,8 +11,8 @@ PRODUCT_URL = (
 )
 
 # Selenium parser configuration
-SELENIUM_SEARCH_TEXT = "Apple iPhone 15 Pro 128GB Black"
+SELENIUM_SEARCH_TEXT = "Apple iPhone 15 Pro 256GB Black"
 
 # Playwright parser configuration
-PLAYWRIGHT_SEARCH_TEXT = "Apple iPhone 16 PRO 128GB Black"
-PLAYWRIGHT_EXPECTED_TITLE_PARTS = ("iphone 16 PRO", "128gb", "black")
+PLAYWRIGHT_SEARCH_TEXT = "Apple iPhone 16 PRO 256GB Black"
+PLAYWRIGHT_EXPECTED_TITLE_PARTS = ("iphone 16 PRO", "256gb", "black")
