@@ -23,7 +23,7 @@ from scraper.engines.base_scraper import BaseScraper
 from scraper.models import ScrapedProduct
 from scraper.selectors import (
     NAVIGATION_XPATH_SELECTORS,
-    PRODUCT_XPATH_SELECTORS,
+    PHONE_XPATH_SELECTORS,
 )
 from scraper.utils import (
     clean_text,
@@ -136,7 +136,7 @@ class PlaywrightScraper(BaseScraper):
     def expand_characteristics(self) -> None:
         """Ensure the technical specs accordion section is opened."""
         btn_loc = self._locator(
-            PRODUCT_XPATH_SELECTORS["characteristics_button"]
+            PHONE_XPATH_SELECTORS["characteristics_button"]
         )
         if btn_loc.count() == 0:
             return
@@ -149,7 +149,7 @@ class PlaywrightScraper(BaseScraper):
     def parse_characteristics(self) -> dict[str, str]:
         """Extract product characteristics key-value dictionary."""
         result: dict[str, str] = {}
-        row_loc = self._locator(PRODUCT_XPATH_SELECTORS["characteristic_row"])
+        row_loc = self._locator(PHONE_XPATH_SELECTORS["characteristic_row"])
 
         for idx in range(row_loc.count()):
             spans = row_loc.nth(idx).locator("xpath=./span")
@@ -167,7 +167,7 @@ class PlaywrightScraper(BaseScraper):
         if self.page is None:
             return []
         images: list[str] = []
-        loc = self._locator(PRODUCT_XPATH_SELECTORS["images"])
+        loc = self._locator(PHONE_XPATH_SELECTORS["images"])
         attrs = (
             "data-observe-src",
             "data-zoom-image",
@@ -195,7 +195,7 @@ class PlaywrightScraper(BaseScraper):
 
     def parse_prices(self) -> tuple[float | None, float | None]:
         """Extract regular and sale prices."""
-        sel = PRODUCT_XPATH_SELECTORS
+        sel = PHONE_XPATH_SELECTORS
         old_price = parse_price(self._first_text(sel["old_price"]))
         new_price = parse_price(self._first_text(sel["new_price"]))
         def_price = parse_price(self._first_text(sel["regular_price"]))
@@ -208,7 +208,7 @@ class PlaywrightScraper(BaseScraper):
 
     def extract_product(self) -> ScrapedProduct:
         """Extract all details from currently loaded product page."""
-        sel = PRODUCT_XPATH_SELECTORS
+        sel = PHONE_XPATH_SELECTORS
         regular, sale = self.parse_prices()
         reviews = parse_number(self._first_text(sel["review_count"]))
 
@@ -294,7 +294,7 @@ class PlaywrightScraper(BaseScraper):
         page.goto(product_url, wait_until="domcontentloaded")
         self._pause("Product page loaded")
 
-        title_loc = self._locator(PRODUCT_XPATH_SELECTORS["title"]).first
+        title_loc = self._locator(PHONE_XPATH_SELECTORS["title"]).first
         title_loc.wait_for(state="attached", timeout=self.wait_ms)
         title = self._text_of(title_loc) or ""
         norm_title = title.casefold().replace(" ", "")
@@ -308,7 +308,7 @@ class PlaywrightScraper(BaseScraper):
                 )
 
         chr_container = self._locator(
-            PRODUCT_XPATH_SELECTORS["characteristics_container"]
+            PHONE_XPATH_SELECTORS["characteristics_container"]
         )
         if chr_container.count():
             chr_container.first.scroll_into_view_if_needed()
@@ -317,7 +317,7 @@ class PlaywrightScraper(BaseScraper):
         self._pause("Characteristics expanded")
 
         self._locator(
-            PRODUCT_XPATH_SELECTORS["characteristic_row"]
+            PHONE_XPATH_SELECTORS["characteristic_row"]
         ).first.wait_for(state="attached")
 
         self._pause("Before collecting product details")

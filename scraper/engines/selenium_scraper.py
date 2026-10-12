@@ -17,7 +17,7 @@ from scraper.engines.base_scraper import BaseScraper
 from scraper.models import ScrapedProduct
 from scraper.selectors import (
     NAVIGATION_XPATH_SELECTORS,
-    PRODUCT_XPATH_SELECTORS,
+    PHONE_XPATH_SELECTORS,
 )
 from scraper.utils import (
     clean_text,
@@ -104,7 +104,7 @@ class SeleniumScraper(BaseScraper):
         """Open the specifications section if currently collapsed."""
         if self.driver is None:
             return
-        xpath = PRODUCT_XPATH_SELECTORS["characteristics_button"]
+        xpath = PHONE_XPATH_SELECTORS["characteristics_button"]
         buttons = self.driver.find_elements(By.XPATH, xpath)
         if not buttons:
             return
@@ -121,7 +121,7 @@ class SeleniumScraper(BaseScraper):
         if self.driver is None:
             return {}
         characteristics: dict[str, str] = {}
-        xpath = PRODUCT_XPATH_SELECTORS["characteristic_row"]
+        xpath = PHONE_XPATH_SELECTORS["characteristic_row"]
         rows = self.driver.find_elements(By.XPATH, xpath)
 
         for row in rows:
@@ -140,7 +140,7 @@ class SeleniumScraper(BaseScraper):
         if self.driver is None:
             return []
         images: list[str] = []
-        xpath = PRODUCT_XPATH_SELECTORS["images"]
+        xpath = PHONE_XPATH_SELECTORS["images"]
 
         for element in self.driver.find_elements(By.XPATH, xpath):
             for attr in (
@@ -167,9 +167,9 @@ class SeleniumScraper(BaseScraper):
 
     def parse_prices(self) -> tuple[float | None, float | None]:
         """Extract regular and sale prices from product page markup."""
-        old_xpath = PRODUCT_XPATH_SELECTORS["old_price"]
-        new_xpath = PRODUCT_XPATH_SELECTORS["new_price"]
-        reg_xpath = PRODUCT_XPATH_SELECTORS.get("regular_price")
+        old_xpath = PHONE_XPATH_SELECTORS["old_price"]
+        new_xpath = PHONE_XPATH_SELECTORS["new_price"]
+        reg_xpath = PHONE_XPATH_SELECTORS.get("regular_price")
 
         old_price = parse_price(self._first_text(old_xpath))
         new_price = parse_price(self._first_text(new_xpath))
@@ -183,7 +183,7 @@ class SeleniumScraper(BaseScraper):
 
     def extract_product(self) -> ScrapedProduct:
         """Extract all details from currently loaded product page."""
-        selectors = PRODUCT_XPATH_SELECTORS
+        selectors = PHONE_XPATH_SELECTORS
         regular, sale = self.parse_prices()
         reviews = parse_number(self._first_text(selectors.get("review_count")))
 
@@ -251,7 +251,7 @@ class SeleniumScraper(BaseScraper):
 
         target_el.click()
 
-        title_xpath = PRODUCT_XPATH_SELECTORS["title"]
+        title_xpath = PHONE_XPATH_SELECTORS["title"]
         wait.until(
             lambda d: "/search/" not in d.current_url
             and bool(d.find_elements(By.XPATH, title_xpath))

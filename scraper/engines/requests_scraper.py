@@ -9,7 +9,7 @@ from config import PRODUCT_URL
 from scraper.display import ProductDisplayService
 from scraper.engines.base_scraper import BaseScraper
 from scraper.models import ScrapedProduct
-from scraper.selectors import BS4_SELECTORS
+from scraper.selectors import PHONE_CSS_SELECTORS
 from scraper.utils import clean_text, parse_number, parse_price
 
 
@@ -35,7 +35,7 @@ class RequestsScraper(BaseScraper):
     def parse_characteristics(self, soup: BeautifulSoup) -> dict[str, str]:
         """Extract all product characteristics into a key-value mapping."""
         characteristics: dict[str, str] = {}
-        rows = soup.select(BS4_SELECTORS["characteristic_row"])
+        rows = soup.select(PHONE_CSS_SELECTORS["characteristic_row"])
 
         for row in rows:
             name_elem = row.select_one("span:first-of-type")
@@ -60,7 +60,7 @@ class RequestsScraper(BaseScraper):
     def parse_images(self, soup: BeautifulSoup, base_url: str) -> list[str]:
         """Extract unique product images."""
         images: list[str] = []
-        image_elements = soup.select(BS4_SELECTORS["images"])
+        image_elements = soup.select(PHONE_CSS_SELECTORS["images"])
 
         for image in image_elements:
             image_url = (
@@ -84,14 +84,14 @@ class RequestsScraper(BaseScraper):
 
         specs = self.parse_characteristics(soup)
 
-        title_elem = soup.select_one(BS4_SELECTORS["title"])
+        title_elem = soup.select_one(PHONE_CSS_SELECTORS["title"])
         title = (
             clean_text(title_elem.get_text(" ", strip=True))
             if title_elem
             else None
         )
 
-        reg_elem = soup.select_one(BS4_SELECTORS["regular_price"])
+        reg_elem = soup.select_one(PHONE_CSS_SELECTORS["regular_price"])
         reg_text = (
             clean_text(reg_elem.get_text(" ", strip=True))
             if reg_elem
@@ -99,7 +99,7 @@ class RequestsScraper(BaseScraper):
         )
         regular_price = parse_price(reg_text)
 
-        sale_selector = BS4_SELECTORS.get("sale_price")
+        sale_selector = PHONE_CSS_SELECTORS.get("sale_price")
         sale_elem = soup.select_one(sale_selector) if sale_selector else None
         sale_text = (
             clean_text(sale_elem.get_text(" ", strip=True))
@@ -108,14 +108,14 @@ class RequestsScraper(BaseScraper):
         )
         sale_price = parse_price(sale_text)
 
-        code_elem = soup.select_one(BS4_SELECTORS["product_code"])
+        code_elem = soup.select_one(PHONE_CSS_SELECTORS["product_code"])
         code_text = (
             clean_text(code_elem.get_text(" ", strip=True))
             if code_elem
             else None
         )
 
-        rev_elem = soup.select_one(BS4_SELECTORS["review_count"])
+        rev_elem = soup.select_one(PHONE_CSS_SELECTORS["review_count"])
         rev_text = (
             clean_text(rev_elem.get_text(" ", strip=True))
             if rev_elem
