@@ -1,4 +1,4 @@
-# CSS selectors for Requests + BeautifulSoup.
+# CSS product_selectors for Requests + BeautifulSoup.
 BS4_SELECTORS = {
     'title': 'h1.main-title',
     'manufacturer': '.br-pr-chr-item > div > div > span:first-of-type + span',

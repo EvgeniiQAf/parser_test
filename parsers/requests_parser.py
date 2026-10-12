@@ -1,43 +1,145 @@
-from pprint import pprint
-import requests
+"""Brain.ua product parser using HTTP requests and BeautifulSoup4."""
+
+from urllib.parse import urljoin
+
 from bs4 import BeautifulSoup
-from models.product_data import create_product_data
-from modules.selectors import BS4_SELECTORS
+from curl_cffi import requests
+
+from config import PRODUCT_URL
+from models.product_data import Product
+from parsers.base_parser import BaseParser
+from parsers.helpers import clean_text, parse_number, parse_price
+from product_selectors.css_selectors import BS4_SELECTORS
+from services.product_service import ProductDisplayService
 
 
-class RequestsParser:
-    """Fetch and parse HTML pages using Requests and BeautifulSoup."""
+class RequestsParser(BaseParser):
+    """Product parser based on curl_cffi requests and BeautifulSoup."""
 
-    def __init__(self, url):
-        """Store the target page URL."""
+    name = "Requests"
+
+    def __init__(self, url: str = PRODUCT_URL, timeout: int = 20) -> None:
         self.url = url
+        self.timeout = timeout
 
-    def get_page(self):
-        """Send an HTTP request and return the server response."""
+    def fetch_html(self, url: str) -> str:
+        """Download product HTML using curl_cffi with Chrome impersonation."""
         response = requests.get(
-            self.url,
-            headers={'User-Agent': 'Mozilla/5.0'},
-            timeout=10,
+            url,
+            impersonate="chrome",
+            timeout=self.timeout,
         )
         response.raise_for_status()
-        return response
+        return response.text
 
-    def parse_page(self, response):
-        """Extract product information from the HTML page."""
-        soup = BeautifulSoup(response.text, 'html.parser')
-        product_data = create_product_data()
+    def parse_characteristics(self, soup: BeautifulSoup) -> dict[str, str]:
+        """Extract all product characteristics into a key-value mapping."""
+        characteristics: dict[str, str] = {}
+        rows = soup.select(BS4_SELECTORS["characteristic_row"])
 
-        # Extract the product title.
-        title_element = soup.select_one(BS4_SELECTORS['title'])
+        for row in rows:
+            name_elem = row.select_one("span:first-of-type")
+            value_elems = row.select("span ~ span")
 
-        if title_element is not None:
-            product_data['title'] = title_element.get_text(strip=True)
+            name = (
+                clean_text(name_elem.get_text(" ", strip=True))
+                if name_elem
+                else None
+            )
+            values = [
+                clean_text(elem.get_text(" ", strip=True))
+                for elem in value_elems
+            ]
+            valid_values = [v for v in values if v]
 
-        return product_data
+            if name and valid_values:
+                characteristics[name.rstrip(":")] = " ".join(valid_values)
 
-if __name__ == '__main__':
-    parser = RequestsParser('https://example.com')
-    response = parser.get_page()
-    product_data = parser.parse_page(response)
+        return characteristics
 
-    pprint(product_data)
+    def parse_images(self, soup: BeautifulSoup, base_url: str) -> list[str]:
+        """Extract unique product images."""
+        images: list[str] = []
+        image_elements = soup.select(BS4_SELECTORS["images"])
+
+        for image in image_elements:
+            image_url = (
+                image.get("data-src")
+                or image.get("src")
+                or image.get("href")
+            )
+            if not image_url:
+                continue
+
+            full_url = urljoin(base_url, image_url)
+            if full_url not in images:
+                images.append(full_url)
+
+        return images
+
+    def parse(self) -> Product:
+        """Fetch page HTML and parse into a populated Product dataclass."""
+        html = self.fetch_html(self.url)
+        soup = BeautifulSoup(html, "lxml")
+
+        specs = self.parse_characteristics(soup)
+
+        title_elem = soup.select_one(BS4_SELECTORS["title"])
+        title = (
+            clean_text(title_elem.get_text(" ", strip=True))
+            if title_elem
+            else None
+        )
+
+        reg_elem = soup.select_one(BS4_SELECTORS["regular_price"])
+        reg_text = (
+            clean_text(reg_elem.get_text(" ", strip=True))
+            if reg_elem
+            else None
+        )
+        regular_price = parse_price(reg_text)
+
+        sale_selector = BS4_SELECTORS.get("sale_price")
+        sale_elem = soup.select_one(sale_selector) if sale_selector else None
+        sale_text = (
+            clean_text(sale_elem.get_text(" ", strip=True))
+            if sale_elem
+            else None
+        )
+        sale_price = parse_price(sale_text)
+
+        code_elem = soup.select_one(BS4_SELECTORS["product_code"])
+        code_text = (
+            clean_text(code_elem.get_text(" ", strip=True))
+            if code_elem
+            else None
+        )
+
+        rev_elem = soup.select_one(BS4_SELECTORS["review_count"])
+        rev_text = (
+            clean_text(rev_elem.get_text(" ", strip=True))
+            if rev_elem
+            else None
+        )
+        review_count = parse_number(rev_text)
+
+        return Product.from_raw(
+            specs=specs,
+            title=title,
+            regular_price=regular_price,
+            sale_price=sale_price,
+            images=self.parse_images(soup, self.url),
+            product_code=code_text,
+            review_count=review_count,
+        )
+
+
+def main() -> None:
+    """Run RequestsParser standalone."""
+    with RequestsParser() as parser:
+        product = parser.parse()
+    ProductDisplayService().display(product, title="REQUESTS PRODUCT")
+
+
+if __name__ == "__main__":
+    main()
